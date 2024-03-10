@@ -18,10 +18,9 @@
             max-width: 700px;
             margin: 40px auto;
             padding: 20px;
-            background-color: #fff; /* Consider making this semi-transparent if you want the background image to show through */
+            background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
-            opacity: 0.95; /* Optional: for slight transparency */
         }
         h1 {
             color: #333;
@@ -82,6 +81,12 @@
                 <label for="monthly-income">Thu Nhập Hàng Tháng (VND):</label>
                 <input type="text" id="monthly-income" required placeholder="Nhập số tiền...">
             </div>
+            <div class="form-group">
+                <label for="savings-rate">Tỷ lệ tiết kiệm (%):</label>
+                <input type="number" id="savings-rate" required placeholder="Nhập tỷ lệ...">
+            <div id="explanations">
+                    <p><strong>Lưu ý:</strong> Tỷ lệ tăng trưởng hàng năm cho tài khoản tiết kiệm là 5%, và cho tài khoản đầu tư là 7%. Điều này giả định rằng số tiền tiết kiệm và đầu tư của bạn sẽ tăng lên mỗi năm dựa trên các tỷ lệ này, phản ánh sự tăng trưởng kép qua thời gian.</p>
+            </div>
             <button type="button" id="calculate">Tính Toán Mục Tiêu Hưu Trí</button>
         </form>
         <div id="result"></div>
@@ -93,100 +98,107 @@
     <script>
         document.querySelectorAll('input[type="text"]').forEach(input => {
             input.addEventListener('input', function(e) {
-                // Remove any non-digit characters
                 let value = this.value.replace(/[\D]/g, '');
-                // Convert to number then back to string to remove leading zeros
                 value = Number(value).toString();
-                // Add commas for thousands, millions, etc.
                 this.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
             });
         });
 
         document.getElementById('calculate').addEventListener('click', function() {
-            const formatToNumber = (str) => Number(str.replace(/,/g, ''));
+        const formatToNumber = (str) => Number(str.replace(/,/g, ''));
 
-            const monthlyExpenditures = formatToNumber(document.getElementById('monthly-expenditures').value);
-            const monthlyIncome = formatToNumber(document.getElementById('monthly-income').value);
+        const monthlyExpenditures = formatToNumber(document.getElementById('monthly-expenditures').value);
+        const monthlyIncome = formatToNumber(document.getElementById('monthly-income').value);
+        const savingsRate = parseFloat(document.getElementById('savings-rate').value) / 100;
+        const depositGrowthRate = 0.05; // 5% annual growth rate for deposit
+        const investmentGrowthRate = 0.07; // 7% annual growth rate for investment
 
-            if (monthlyIncome <= monthlyExpenditures) {
-                document.getElementById('result').innerHTML = 'Thu nhập hàng tháng của bạn phải lớn hơn chi tiêu hàng tháng.';
-                return;
-            }
+        if (monthlyIncome <= monthlyExpenditures) {
+            document.getElementById('result').innerHTML = 'Thu nhập hàng tháng của bạn phải lớn hơn chi tiêu hàng tháng.';
+            return;
+        }
 
-            const monthlySavings = monthlyIncome - monthlyExpenditures;
-            const retirementGoal = (monthlyExpenditures * 12) / 0.04;
-            const monthsToRetirement = retirementGoal / monthlySavings;
-            const yearsToRetirement = Math.floor(monthsToRetirement / 12);
-            const remainingMonths = Math.ceil(monthsToRetirement % 12);
+        const investmentSavings = monthlyIncome * savingsRate;
+        const depositSavings = monthlyIncome - monthlyExpenditures - investmentSavings;
 
-            document.getElementById('result').innerHTML = `
-                <p>Mục tiêu hưu trí của bạn dựa trên quy tắc 4% là: <strong>${retirementGoal.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</strong>.</p>
-                <p>Đây là số tiền bạn cần tiết kiệm để đảm bảo mức chi tiêu hàng tháng của mình sau khi nghỉ hưu, không cần phải làm việc thêm.</p>
-                <p>Thời gian cần thiết để đạt mục tiêu hưu trí: <strong>${yearsToRetirement} năm và ${remainingMonths} tháng</strong>.</p>
-            `;
-            updateChart(yearsToRetirement + remainingMonths / 12, monthlySavings);
+        // Initialize future values for deposit and investment
+        let futureInvestmentValue = 0;
+        let futureDepositValue = 0;
+        let totalSavings = 0;
+        let months = 0;
+
+        // Calculate the retirement goal using the 4% rule
+        const retirementGoal = (monthlyExpenditures * 12) / 0.04;
+
+        // Loop to calculate future values until the total savings reach the retirement goal
+        while (totalSavings < retirementGoal) {
+            months++;
+            futureInvestmentValue += investmentSavings;
+            futureDepositValue += depositSavings;
+
+            // Apply the monthly growth based on annual rates
+            futureInvestmentValue *= (1 + investmentGrowthRate / 12);
+            futureDepositValue *= (1 + depositGrowthRate / 12);
+
+            totalSavings = futureInvestmentValue + futureDepositValue;
+        }
+
+        const yearsToRetirement = Math.floor(months / 12);
+        const remainingMonths = months % 12;
+
+        document.getElementById('result').innerHTML = `
+            <p>Mục tiêu hưu trí của bạn dựa trên quy tắc 4% là: ${retirementGoal.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}.</p>
+            <p>Thời gian cần thiết để đạt mục tiêu hưu trí: ${yearsToRetirement} năm và ${remainingMonths} tháng.</p>
+        `;
+          // Call updateChart with necessary data
+          updateChart(yearsToRetirement, investmentSavings, depositSavings);
         });
         let savingsChart; // This will hold the chart instance
 
-        function updateChart(years, monthlySavings) {
-            const ctx = document.getElementById('savingsChart').getContext('2d');
-            // Calculate savings per year
-            const savingsPerYear = monthlySavings * 12;
-            const labels = Array.from({length: Math.ceil(years)}, (_, i) => i + 1);
-            const data = labels.map(label => label * savingsPerYear);
+    function updateChart(years, investment, deposit) {
+        const ctx = document.getElementById('savingsChart').getContext('2d');
+        const labels = Array.from({length: years * 12}, (_, i) => (i + 1).toString()); // Monthly labels
 
-            if (savingsChart) {
-                savingsChart.destroy(); // Destroy the previous chart instance if exists
-            }
+        // Calculate cumulative savings for each month
+        const data = labels.map((label, index) => ((index + 1) * (investment + deposit)).toFixed(2));
 
-            savingsChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Tiết Kiệm Theo Năm',
-                        data: data,
-                        fill: false,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Tổng Tiết Kiệm (VND)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Năm'
-                            }
+        if (savingsChart) {
+            savingsChart.destroy(); // Destroy the previous chart instance if exists
+        }
+
+        savingsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels.map((label, index) => index % 12 === 0 ? `${index / 12 + 1} year` : ''), // Show only yearly labels
+                datasets: [{
+                    label: 'Cumulative Savings Over Time',
+                    data: data,
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Total Savings (VND)'
                         }
                     },
-                    locale: 'vi-VN',
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.parsed.y);
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (years)'
+                        },
+                        autoSkip: true,
+                        maxTicksLimit: years + 1 // Limit x-axis labels to show only up to the number of years
                     }
                 }
-            });
-        }
+            }
+        });
+    }
     </script>
 </body>
 </html>
