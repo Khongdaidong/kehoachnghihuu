@@ -3,6 +3,9 @@ body, html {
     padding: 0;
     margin: 0;
     background-color: #f4f4f7;
+    background-image: url('YOUR_IMAGE_URL_HERE'); /* Add this line */
+    background-size: cover; /* Cover the entire page */
+    background-position: center; /* Center the background image */
 }
 
 .container {

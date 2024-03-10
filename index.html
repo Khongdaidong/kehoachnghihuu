@@ -2,22 +2,26 @@
 <html lang="vn">
 <head>
     <meta charset="UTF-8">
-    <title>Tính Toán Kế Hoạch Hưu Trí</title>
+    <title>Máy Tính Kế Hoạch Hưu Trí</title>
     <style>
         body, html {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 0;
             margin: 0;
             background-color: #f4f4f7;
+            background-image: url('https://files.oaiusercontent.com/file-izUcpZTxDUCUD2kVIi4K0aoE?se=2024-03-10T13%3A01%3A00Z&sp=r&sv=2021-08-06&sr=b&rscc=max-age%3D31536000%2C%20immutable&rscd=attachment%3B%20filename%3Da3bd3c55-8f8d-4566-b83a-c436be5eec6d.webp&sig=8BvwtHzw/eBaOSXESKcqicQQ2pHSRX0S/JvEYmnTOjI%3D'); /* Add your image URL */
+            background-size: cover;
+            background-position: center;
         }
         .container {
             width: 90%;
             max-width: 700px;
             margin: 40px auto;
             padding: 20px;
-            background-color: #fff;
+            background-color: #fff; /* Consider making this semi-transparent if you want the background image to show through */
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
+            opacity: 0.95; /* Optional: for slight transparency */
         }
         h1 {
             color: #333;
@@ -68,15 +72,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>Tính Toán Kế Hoạch Hưu Trí</h1>
+        <h1>Máy Tính Kế Hoạch Hưu Trí</h1>
         <form id="calculator-form">
             <div class="form-group">
                 <label for="monthly-expenditures">Chi Tiêu Hàng Tháng (VND):</label>
-                <input type="number" id="monthly-expenditures" required>
+                <input type="text" id="monthly-expenditures" required placeholder="Nhập số tiền...">
             </div>
             <div class="form-group">
                 <label for="monthly-income">Thu Nhập Hàng Tháng (VND):</label>
-                <input type="number" id="monthly-income" required>
+                <input type="text" id="monthly-income" required placeholder="Nhập số tiền...">
             </div>
             <button type="button" id="calculate">Tính Toán Mục Tiêu Hưu Trí</button>
         </form>
@@ -87,9 +91,22 @@
     </div>
 
     <script>
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('input', function(e) {
+                // Remove any non-digit characters
+                let value = this.value.replace(/[\D]/g, '');
+                // Convert to number then back to string to remove leading zeros
+                value = Number(value).toString();
+                // Add commas for thousands, millions, etc.
+                this.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            });
+        });
+
         document.getElementById('calculate').addEventListener('click', function() {
-            const monthlyExpenditures = parseFloat(document.getElementById('monthly-expenditures').value);
-            const monthlyIncome = parseFloat(document.getElementById('monthly-income').value);
+            const formatToNumber = (str) => Number(str.replace(/,/g, ''));
+
+            const monthlyExpenditures = formatToNumber(document.getElementById('monthly-expenditures').value);
+            const monthlyIncome = formatToNumber(document.getElementById('monthly-income').value);
 
             if (monthlyIncome <= monthlyExpenditures) {
                 document.getElementById('result').innerHTML = 'Thu nhập hàng tháng của bạn phải lớn hơn chi tiêu hàng tháng.';
@@ -107,26 +124,27 @@
                 <p>Đây là số tiền bạn cần tiết kiệm để đảm bảo mức chi tiêu hàng tháng của mình sau khi nghỉ hưu, không cần phải làm việc thêm.</p>
                 <p>Thời gian cần thiết để đạt mục tiêu hưu trí: <strong>${yearsToRetirement} năm và ${remainingMonths} tháng</strong>.</p>
             `;
-            updateChart(yearsToRetirement + (remainingMonths / 12), monthlySavings);
+            updateChart(yearsToRetirement + remainingMonths / 12, monthlySavings);
         });
-
-        let savingsChart;
+        let savingsChart; // This will hold the chart instance
 
         function updateChart(years, monthlySavings) {
             const ctx = document.getElementById('savingsChart').getContext('2d');
-            const labels = Array.from({length: years}, (_, i) => i + 1);
-            const data = labels.map(label => monthlySavings * 12 * label);
+            // Calculate savings per year
+            const savingsPerYear = monthlySavings * 12;
+            const labels = Array.from({length: Math.ceil(years)}, (_, i) => i + 1);
+            const data = labels.map(label => label * savingsPerYear);
 
             if (savingsChart) {
-                savingsChart.destroy();
+                savingsChart.destroy(); // Destroy the previous chart instance if exists
             }
 
             savingsChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels.map(label => `Năm ${label}`),
+                    labels: labels,
                     datasets: [{
-                        label: 'Tiết Kiệm Theo Thời Gian',
+                        label: 'Tiết Kiệm Theo Năm',
                         data: data,
                         fill: false,
                         borderColor: 'rgb(75, 192, 192)',
@@ -145,7 +163,24 @@
                         x: {
                             title: {
                                 display: true,
-                                text: 'Thời Gian (Năm)'
+                                text: 'Năm'
+                            }
+                        }
+                    },
+                    locale: 'vi-VN',
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
                             }
                         }
                     }
