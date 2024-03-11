@@ -84,8 +84,9 @@
             <div class="form-group">
                 <label for="savings-rate">Tỷ lệ tiết kiệm (%):</label>
                 <input type="number" id="savings-rate" required placeholder="Nhập tỷ lệ...">
-            <div id="explanations">
-                    <p><strong>Lưu ý:</strong> Tỷ lệ tăng trưởng hàng năm cho tài khoản tiết kiệm là 5%, và cho tài khoản đầu tư là 7%. Điều này giả định rằng số tiền tiết kiệm và đầu tư của bạn sẽ tăng lên mỗi năm dựa trên các tỷ lệ này, phản ánh sự tăng trưởng kép qua thời gian.</p>
+            <div class="form-group">
+                <label for="initial-balance">Số dư ban đầu (VND):</label>
+                <input type="text" id="initial-balance" required placeholder="Nhập số tiền...">
             </div>
             <button type="button" id="calculate">Tính Toán Mục Tiêu Hưu Trí</button>
         </form>
@@ -93,6 +94,16 @@
         <div class="chart-container">
             <canvas id="savingsChart"></canvas>
         </div>
+    </div>
+
+    <div id="explanations">
+        <p><strong>Những giả định của phép tính:</strong></p>
+        <ul>
+            <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản tiết kiệm là 5%, chưa điều chỉnh cho lạm phát.</li>
+            <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản đầu tư là 7%, chưa điều chỉnh cho lạm phát.</li>
+            <li>Lạm phát hàng năm dự kiến là 3%.</li>
+            <li>Số dư ban đầu và tiết kiệm hàng tháng sẽ đóng góp vào mục tiêu hưu trí.</li>
+        </ul>
     </div>
 
     <script>
