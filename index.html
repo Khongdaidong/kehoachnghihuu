@@ -3,70 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Máy Tính Kế Hoạch Hưu Trí</title>
-    <style>
-        body, html {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 0;
-            margin: 0;
-            background-color: #f4f4f7;
-            background-image: url('https://files.oaiusercontent.com/file-izUcpZTxDUCUD2kVIi4K0aoE?se=2024-03-10T13%3A01%3A00Z&sp=r&sv=2021-08-06&sr=b&rscc=max-age%3D31536000%2C%20immutable&rscd=attachment%3B%20filename%3Da3bd3c55-8f8d-4566-b83a-c436be5eec6d.webp&sig=8BvwtHzw/eBaOSXESKcqicQQ2pHSRX0S/JvEYmnTOjI%3D'); /* Add your image URL */
-            background-size: cover;
-            background-position: center;
-        }
-        .container {
-            width: 90%;
-            max-width: 700px;
-            margin: 40px auto;
-            padding: 20px;
-            background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent white */
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #666;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            background-color: #0056b3;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #003974;
-        }
-        #result {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 18px;
-            color: #333;
-        }
-        .chart-container {
-            margin-top: 30px;
-            width: 100%;
-            height: 400px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -84,6 +21,7 @@
             <div class="form-group">
                 <label for="savings-rate">Tỷ lệ tiết kiệm (%):</label>
                 <input type="number" id="savings-rate" required placeholder="Nhập tỷ lệ...">
+            </div>
             <div class="form-group">
                 <label for="initial-balance">Số dư ban đầu (VND):</label>
                 <input type="text" id="initial-balance" required placeholder="Nhập số tiền...">
@@ -94,122 +32,16 @@
         <div class="chart-container">
             <canvas id="savingsChart"></canvas>
         </div>
+        <div id="explanations">
+            <p><strong>Những giả định của phép tính:</strong></p>
+            <ul>
+                <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản tiết kiệm là 5.7%.</li>
+                <li>Tỷ lệ đầu tư đã được điều chỉnh cho lạm phát.</li>
+                <li>Lạm phát hàng năm dự kiến là 3.1%.</li>
+                <li>Số dư ban đầu và tiết kiệm hàng tháng sẽ đóng góp vào mục tiêu hưu trí, được tính toán dựa trên lãi suất kép.</li>
+            </ul>
+        </div>
     </div>
-
-    <div id="explanations">
-        <p><strong>Những giả định của phép tính:</strong></p>
-        <ul>
-            <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản tiết kiệm là 5%, chưa điều chỉnh cho lạm phát.</li>
-            <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản đầu tư là 7%, chưa điều chỉnh cho lạm phát.</li>
-            <li>Lạm phát hàng năm dự kiến là 3%.</li>
-            <li>Số dư ban đầu và tiết kiệm hàng tháng sẽ đóng góp vào mục tiêu hưu trí.</li>
-        </ul>
-    </div>
-
-    <script>
-        document.querySelectorAll('input[type="text"]').forEach(input => {
-            input.addEventListener('input', function(e) {
-                let value = this.value.replace(/[\D]/g, '');
-                value = Number(value).toString();
-                this.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            });
-        });
-
-        document.getElementById('calculate').addEventListener('click', function() {
-        const formatToNumber = (str) => Number(str.replace(/,/g, ''));
-
-        const monthlyExpenditures = formatToNumber(document.getElementById('monthly-expenditures').value);
-        const monthlyIncome = formatToNumber(document.getElementById('monthly-income').value);
-        const savingsRate = parseFloat(document.getElementById('savings-rate').value) / 100;
-        const depositGrowthRate = 0.05; // 5% annual growth rate for deposit
-        const investmentGrowthRate = 0.07; // 7% annual growth rate for investment
-
-        if (monthlyIncome <= monthlyExpenditures) {
-            document.getElementById('result').innerHTML = 'Thu nhập hàng tháng của bạn phải lớn hơn chi tiêu hàng tháng.';
-            return;
-        }
-
-        const investmentSavings = monthlyIncome * savingsRate;
-        const depositSavings = monthlyIncome - monthlyExpenditures - investmentSavings;
-
-        // Initialize future values for deposit and investment
-        let futureInvestmentValue = 0;
-        let futureDepositValue = 0;
-        let totalSavings = 0;
-        let months = 0;
-
-        // Calculate the retirement goal using the 4% rule
-        const retirementGoal = (monthlyExpenditures * 12) / 0.04;
-
-        // Loop to calculate future values until the total savings reach the retirement goal
-        while (totalSavings < retirementGoal) {
-            months++;
-            futureInvestmentValue += investmentSavings;
-            futureDepositValue += depositSavings;
-
-            // Apply the monthly growth based on annual rates
-            futureInvestmentValue *= (1 + investmentGrowthRate / 12);
-            futureDepositValue *= (1 + depositGrowthRate / 12);
-
-            totalSavings = futureInvestmentValue + futureDepositValue;
-        }
-
-        const yearsToRetirement = Math.floor(months / 12);
-        const remainingMonths = months % 12;
-
-        document.getElementById('result').innerHTML = `
-            <p>Mục tiêu hưu trí của bạn dựa trên quy tắc 4% là: ${retirementGoal.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}.</p>
-            <p>Thời gian cần thiết để đạt mục tiêu hưu trí: ${yearsToRetirement} năm và ${remainingMonths} tháng.</p>
-        `;
-          // Call updateChart with necessary data
-          updateChart(yearsToRetirement, investmentSavings, depositSavings);
-        });
-        let savingsChart; // This will hold the chart instance
-
-    function updateChart(years, investment, deposit) {
-        const ctx = document.getElementById('savingsChart').getContext('2d');
-        const labels = Array.from({length: years * 12}, (_, i) => (i + 1).toString()); // Monthly labels
-
-        // Calculate cumulative savings for each month
-        const data = labels.map((label, index) => ((index + 1) * (investment + deposit)).toFixed(2));
-
-        if (savingsChart) {
-            savingsChart.destroy(); // Destroy the previous chart instance if exists
-        }
-
-        savingsChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels.map((label, index) => index % 12 === 0 ? `${index / 12 + 1} year` : ''), // Show only yearly labels
-                datasets: [{
-                    label: 'Cumulative Savings Over Time',
-                    data: data,
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Total Savings (VND)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Time (years)'
-                        },
-                        autoSkip: true,
-                        maxTicksLimit: years + 1 // Limit x-axis labels to show only up to the number of years
-                    }
-                }
-            }
-        });
-    }
-    </script>
+    <script src="script.js"></script> <!-- Updated to reference an external JS file for better structure -->
 </body>
 </html>
