@@ -26,6 +26,14 @@
                 <label for="initial-balance">Số dư ban đầu (VND):</label>
                 <input type="text" id="initial-balance" required placeholder="Nhập số tiền...">
             </div>
+            <div class="form-group">
+                <label for="one-off-amount">Số tiền của giao dịch không thường xuyên (VND): mua nhà, mua xe,.. </label>
+                <input type="text" id="one-off-amount" placeholder="Nhập số tiền...">
+            </div>
+            <div class="form-group">
+                <label for="one-off-month">Tháng xảy ra giao dịch không thường xuyên:</label>
+                <input type="number" id="one-off-month" placeholder="Nhập tháng...">
+            </div>            
             <button type="button" id="calculate">Tính Toán Mục Tiêu Hưu Trí</button>
         </form>
         <div id="result"></div>
@@ -35,7 +43,7 @@
         <div id="explanations">
             <p><strong>Những giả định của phép tính:</strong></p>
             <ul>
-                <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản tiết kiệm là 5.7%.</li>
+                <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản tiết kiệm là 5.7%</li>
                 <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản đầu tư là 7.7%</li>
                 <li>Lạm phát hàng năm dự kiến là 3.1%.</li>
                 <li>Số dư ban đầu và tiết kiệm hàng tháng sẽ đóng góp vào mục tiêu hưu trí, được tính toán dựa trên lãi suất kép.</li>
