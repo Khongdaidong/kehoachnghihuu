@@ -70,3 +70,13 @@ button:hover {
     width: 100%;
     height: 400px;
 }
+
+.button-group button {
+    margin-bottom: 10px; /* Adds space below each button for vertical spacing */
+    /* or use margin-right for horizontal spacing */
+}
+
+.space-right {
+    margin-right: 10px; /* Apply this class to any element that needs space on the right */
+}
+

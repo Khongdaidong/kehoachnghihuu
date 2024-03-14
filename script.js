@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('toggle-one-off').addEventListener('click', function() {
+        var oneOffFields = document.getElementById('one-off-fields');
+        if (oneOffFields.style.display === 'none') {
+            oneOffFields.style.display = 'block';
+        } else {
+            oneOffFields.style.display = 'none';
+        }
+    });
+
     document.getElementById('calculate').addEventListener('click', function() {
         const formatToNumber = (str) => str ? Number(str.replace(/,/g, '')) : 0;
         const formatNumberWithSeparators = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -7,20 +16,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const monthlyIncome = formatToNumber(document.getElementById('monthly-income').value);
         const savingsRate = parseFloat(document.getElementById('savings-rate').value) / 100;
         const initialBalance = formatToNumber(document.getElementById('initial-balance').value);
-
+        const includeOneOff = document.getElementById('one-off-fields').style.display !== 'none';
+        
         const oneOffAmountInput = document.getElementById('one-off-amount').value;
         const oneOffAmount = oneOffAmountInput ? formatToNumber(oneOffAmountInput) : 0;
-        // Format the one-off amount for display
         document.getElementById('one-off-amount').value = formatNumberWithSeparators(oneOffAmount);
         
         const oneOffMonthInput = document.getElementById('one-off-month').value;
         const oneOffMonth = oneOffMonthInput ? parseInt(oneOffMonthInput) : 0;
+
         if (monthlyIncome <= monthlyExpenditures) {
             document.getElementById('result').innerHTML = 'Thu nhập hàng tháng của bạn phải lớn hơn chi tiêu hàng tháng.';
             return;
         }
 
-        if (oneOffAmount && (isNaN(oneOffMonth) || oneOffMonth < 1)) {
+        if (includeOneOff && oneOffAmount && (isNaN(oneOffMonth) || oneOffMonth < 1)) {
             alert("Please enter a valid month (1 or higher) for the one-off transaction.");
             return;
         }
@@ -42,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             totalSavings += monthlySavings + monthlyNonInvestmentSavings;
 
-            if (months === oneOffMonth) {
+            if (includeOneOff && oneOffAmount && months === oneOffMonth) {
                 totalSavings -= oneOffAmount;
                 if (totalSavings < 0) totalSavings = 0;
             }
@@ -59,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <p>Mục tiêu hưu trí của bạn dựa trên quy tắc 4% là: ${retirementGoal.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}.</p>
             <p>Thời gian cần thiết để đạt mục tiêu hưu trí: ${yearsToRetirement} năm và ${remainingMonths} tháng.</p>
         `;
-        // Existing code to calculate retirement savings...
 
         // Pass the oneOffAmount and oneOffMonth to the updateChart function
         updateChart(months, initialBalance, monthlyIncome, savingsRate, monthlyExpenditures, investmentGrowthRate, depositGrowthRate, oneOffAmount, oneOffMonth);

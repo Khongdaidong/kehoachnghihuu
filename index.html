@@ -5,6 +5,12 @@
     <title>Máy Tính Kế Hoạch Hưu Trí</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Add custom styles here if you don't have an external CSS file */
+        .button-group button {
+            margin-bottom: 10px; /* Adds space below each button */
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -26,15 +32,23 @@
                 <label for="initial-balance">Số dư ban đầu (VND):</label>
                 <input type="text" id="initial-balance" required placeholder="Nhập số tiền...">
             </div>
-            <div class="form-group">
-                <label for="one-off-amount">Số tiền của giao dịch không thường xuyên (VND): mua nhà, mua xe,.. </label>
-                <input type="text" id="one-off-amount" placeholder="Nhập số tiền...">
+            <div class="button-group">
+                <button type="button" id="toggle-one-off">Thêm vào giao dịch không thường xuyên</button>
+            <div>
+
+            <div id="one-off-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="one-off-amount">Số tiền của giao dịch không thường xuyên (VND): mua nhà, mua xe,.. </label>
+                    <input type="text" id="one-off-amount" placeholder="Nhập số tiền...">
+                </div>
+                <div class="form-group">
+                    <label for="one-off-month">Tháng xảy ra giao dịch không thường xuyên:</label>
+                    <input type="number" id="one-off-month" placeholder="Nhập tháng...">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="one-off-month">Tháng xảy ra giao dịch không thường xuyên:</label>
-                <input type="number" id="one-off-month" placeholder="Nhập tháng...">
-            </div>            
             <button type="button" id="calculate">Tính Toán Mục Tiêu Hưu Trí</button>
+        </div>
+            </div>
         </form>
         <div id="result"></div>
         <div class="chart-container">
@@ -50,6 +64,6 @@
             </ul>
         </div>
     </div>
-    <script src="script.js"></script> <!-- Updated to reference an external JS file for better structure -->
+    <script src="script.js"></script>
 </body>
 </html>
