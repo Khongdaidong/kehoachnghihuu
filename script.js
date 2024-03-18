@@ -35,9 +35,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const inflationRate = 0.031;
-        const depositGrowthRate = 0.057;
-        const investmentGrowthRate = 0.077;
+        const inflationRate = 0.062;
+        const depositGrowthRate = 0.072;
+        const investmentGrowthRate = 0.143;
 
         let months = 0;
         let totalSavings = initialBalance;
@@ -45,12 +45,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         while (totalSavings < retirementGoal) {
             months++;
-            let monthlySavings = (monthlyIncome - monthlyExpenditures) * savingsRate;
-            let monthlyNonInvestmentSavings = (monthlyIncome - monthlyExpenditures - monthlySavings);
+            let monthlySavings = (monthlyIncome - monthlyExpenditures);
 
             totalSavings *= (1 + (savingsRate * investmentGrowthRate + (1 - savingsRate) * depositGrowthRate) / 12);
 
-            totalSavings += monthlySavings + monthlyNonInvestmentSavings;
+            totalSavings += monthlySavings;
 
             if (includeOneOff && oneOffAmount && months === oneOffMonth) {
                 totalSavings -= oneOffAmount;
