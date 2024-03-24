@@ -2,68 +2,89 @@
 <html lang="vn">
 <head>
     <meta charset="UTF-8">
-    <title>Bảng Tính Kế Hoạch Hưu Trí</title>
+    <title>Công cụ lập kế hoạch hưu trí</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="path/to/your/favicon.ico"> <!-- Update your favicon path here -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Add custom styles here if you don't have an external CSS file */
-        .button-group button {
-            margin-bottom: 10px; /* Adds space below each button */
-        }
-    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Bảng Tính Kế Hoạch Hưu Trí</h1>
+        <h1>Công cụ lập kế hoạch hưu trí</h1>
         <form id="calculator-form">
             <div class="form-group">
-                <label for="monthly-expenditures">Chi Tiêu Hàng Tháng (VND):</label>
+                <label for="monthly-expenditures">Chi tiêu hàng tháng (VND):</label>
                 <input type="text" id="monthly-expenditures" required placeholder="Nhập số tiền...">
             </div>
             <div class="form-group">
-                <label for="monthly-income">Thu Nhập Hàng Tháng (VND):</label>
+                <label for="monthly-income">Thu nhập hàng tháng (VND):</label>
                 <input type="text" id="monthly-income" required placeholder="Nhập số tiền...">
             </div>
             <div class="form-group">
-                <label for="savings-rate">Tỷ lệ tiền bỏ vào tài khoản đầu tư (%):</label>
+                <label for="savings-rate">Tỷ lệ tiền tiết kiệm hàng tháng dành cho đầu tư (%):</label>
                 <input type="number" id="savings-rate" required placeholder="Nhập tỷ lệ...">
             </div>
             <div class="form-group">
                 <label for="initial-balance">Số dư ban đầu (VND):</label>
                 <input type="text" id="initial-balance" required placeholder="Nhập số tiền...">
             </div>
-            <div class="button-group">
-                <button type="button" id="toggle-one-off">Thêm vào giao dịch không thường xuyên</button>
-            <div>
-
-            <div id="one-off-fields" style="display: none;">
+            <div class="form-group">
+                <label for="income-increase-type">Tăng thu nhập hàng tháng bằng:</label>
+                <select id="income-increase-type">
+                    <option value="fixed">Số tiền cố định từ năm</option>
+                    <option value="percentage">Phần trăm hàng năm</option>
+                </select>
+            </div>
+            <div id="fixed-income-increase-fields">
                 <div class="form-group">
-                    <label for="one-off-amount">Số tiền của giao dịch không thường xuyên (VND): mua nhà, mua xe,.. </label>
-                    <input type="text" id="one-off-amount" placeholder="Nhập số tiền...">
+                    <label for="new-monthly-income">Thu nhập hàng tháng mới (VND):</label>
+                    <input type="text" id="new-monthly-income" placeholder="Nhập số tiền...">
                 </div>
                 <div class="form-group">
-                    <label for="one-off-month">Tháng xảy ra giao dịch không thường xuyên:</label>
-                    <input type="number" id="one-off-month" placeholder="Nhập tháng...">
+                    <label for="income-increase-year">Năm tăng thu nhập:</label>
+                    <input type="number" id="income-increase-year" placeholder="Nhập năm...">
                 </div>
             </div>
-            <button type="button" id="calculate">Tính Toán Mục Tiêu Hưu Trí</button>
-        </div>
+            <div class="form-group" id="percentage-increase-group" style="display: none;">
+                <label for="annual-percentage-increase">Tăng trưởng hàng năm (%):</label>
+                <input type="number" id="annual-percentage-increase" placeholder="Nhập tỷ lệ...">
             </div>
+            <!-- Ad-hoc Expense Input -->
+            <div class="form-group">
+                <label for="adhoc-expense">Chi phí không thường xuyên (VND):</label>
+                <input type="text" id="adhoc-expense" placeholder="Nhập số tiền...">
+            <div class="form-group">
+                <label>Áp dụng chi phí không thường xuyên hàng năm:</label>
+                <div>
+                    <input type="radio" id="adhoc-annual-yes" name="adhoc-annual" value="yes">
+                    <label for="adhoc-annual-yes">Có</label>
+                    <input type="radio" id="adhoc-annual-no" name="adhoc-annual" value="no" checked>
+                    <label for="adhoc-annual-no">Không</label>
+                </div>
+                <div class="form-group">
+                    <label for="adhoc-month">Tháng chi phí không thường xuyên phát sinh: (ví dụ: nếu phát sinh tháng thứ 1 của năm thứ 2 thì điền vào 25) </label>
+                    <input type="number" id="adhoc-month" placeholder="Nhập tháng..." min="1" max="12">
+                </div>
+                
+            <button type="button" id="calculate">Tính toán mục tiêu hưu trí</button>
         </form>
         <div id="result"></div>
         <div class="chart-container">
             <canvas id="savingsChart"></canvas>
         </div>
-        <div id="explanations">
+        <div class="footnote">
             <p><strong>Những giả định của phép tính:</strong></p>
             <ul>
                 <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản tiết kiệm là 7.2%</li>
                 <li>Tỷ lệ tăng trưởng hàng năm cho tài khoản đầu tư là 14.3%</li>
-                <li>Lạm phát hàng năm dự kiến là 6.2%.</li>
+                <li>Lạm phát hàng năm dự kiến là 6.2%</li>
                 <li>Số dư ban đầu và tiết kiệm hàng tháng sẽ đóng góp vào mục tiêu hưu trí, được tính toán dựa trên lãi suất kép.</li>
             </ul>
         </div>
     </div>
     <script src="script.js"></script>
+    <script>
+        // Ensure to place any additional inline JavaScript here
+        // For example, initializing the form or other elements if needed
+    </script>
 </body>
 </html>

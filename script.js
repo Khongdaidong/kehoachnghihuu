@@ -1,113 +1,125 @@
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('toggle-one-off').addEventListener('click', function() {
-        var oneOffFields = document.getElementById('one-off-fields');
-        if (oneOffFields.style.display === 'none') {
-            oneOffFields.style.display = 'block';
+    const incomeIncreaseTypeElement = document.getElementById('income-increase-type');
+    const fixedIncomeIncreaseFields = document.getElementById('fixed-income-increase-fields');
+    const percentageIncreaseGroup = document.getElementById('percentage-increase-group');
+
+    incomeIncreaseTypeElement.addEventListener('change', function() {
+        if (this.value === 'percentage') {
+            fixedIncomeIncreaseFields.style.display = 'none';
+            percentageIncreaseGroup.style.display = 'block';
         } else {
-            oneOffFields.style.display = 'none';
+            fixedIncomeIncreaseFields.style.display = 'block';
+            percentageIncreaseGroup.style.display = 'none';
+        }
+    });
+
+    const adhocAnnualYesElement = document.getElementById('adhoc-annual-yes');
+    const adhocMonthElement = document.getElementById('adhoc-month');
+
+    // Listen for input changes on the ad-hoc month field
+    adhocMonthElement.addEventListener('input', function() {
+        if (document.getElementById('adhoc-annual-yes').checked && this.value > 12) {
+            alert('Vui lòng nhập một số không lớn hơn 12 cho tháng nếu chi phí được áp dụng hàng năm.');
+            this.value = ''; // Clear the input
+        }
+    });
+
+    document.getElementById('calculate').addEventListener('click', function() {
+        // Ensure ad-hoc month is valid when annual is selected
+        if (document.getElementById('adhoc-annual-yes').checked && adhocMonthElement.value > 12) {
+            alert('Vui lòng nhập một số không lớn hơn 12 cho tháng nếu chi phí được áp dụng hàng năm.');
+            return; // Stop further execution
+        }
+    });
+      
+    // Ensure the month cannot be more than 12 if "Yes" is selected for annual expense
+    adhocAnnualYesElement.addEventListener('change', function() {
+        if (this.checked) {
+            adhocMonthElement.max = 12;
         }
     });
 
     document.getElementById('calculate').addEventListener('click', function() {
         const formatToNumber = (str) => str ? Number(str.replace(/,/g, '')) : 0;
-        const formatNumberWithSeparators = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-
-        const monthlyExpenditures = formatToNumber(document.getElementById('monthly-expenditures').value);
-        const monthlyIncome = formatToNumber(document.getElementById('monthly-income').value);
+        let monthlyExpenditures = formatToNumber(document.getElementById('monthly-expenditures').value);
+        let monthlyIncome = formatToNumber(document.getElementById('monthly-income').value);
         const savingsRate = parseFloat(document.getElementById('savings-rate').value) / 100;
         const initialBalance = formatToNumber(document.getElementById('initial-balance').value);
-        const includeOneOff = document.getElementById('one-off-fields').style.display !== 'none';
-        
-        const oneOffAmountInput = document.getElementById('one-off-amount').value;
-        const oneOffAmount = oneOffAmountInput ? formatToNumber(oneOffAmountInput) : 0;
-        document.getElementById('one-off-amount').value = formatNumberWithSeparators(oneOffAmount);
-        
-        const oneOffMonthInput = document.getElementById('one-off-month').value;
-        const oneOffMonth = oneOffMonthInput ? parseInt(oneOffMonthInput) : 0;
-
-        if (monthlyIncome <= monthlyExpenditures) {
-            document.getElementById('result').innerHTML = 'Thu nhập hàng tháng của bạn phải lớn hơn chi tiêu hàng tháng.';
-            return;
-        }
-
-        if (includeOneOff && oneOffAmount && (isNaN(oneOffMonth) || oneOffMonth < 1)) {
-            alert("Please enter a valid month (1 or higher) for the one-off transaction.");
-            return;
-        }
-
+        const newMonthlyIncome = formatToNumber(document.getElementById('new-monthly-income').value);
+        const incomeIncreaseYear = parseInt(document.getElementById('income-increase-year').value);
         const inflationRate = 0.062;
-        const depositGrowthRate = 0.072;
-        const investmentGrowthRate = 0.143;
+        const incomeIncreaseType = document.getElementById('income-increase-type').value;
+        const annualPercentageIncrease = parseFloat(document.getElementById('annual-percentage-increase').value) / 100 || 0;
 
-        let months = 0;
-        let totalSavings = initialBalance;
+        const adhocExpense = formatToNumber(document.getElementById('adhoc-expense').value);
+        let adhocMonth = parseInt(adhocMonthElement.value);
+        const adhocAnnual = document.getElementById('adhoc-annual-yes').checked;
+
         let retirementGoal = (monthlyExpenditures * 12) / 0.04;
+        let totalSavings = initialBalance;
+        let data = [totalSavings];
+        let months = 0;
+        let retirementReached = false;
 
-        while (totalSavings < retirementGoal) {
+        while (!retirementReached) {
             months++;
-            let monthlySavings = (monthlyIncome - monthlyExpenditures);
-
-            totalSavings *= (1 + (savingsRate * investmentGrowthRate + (1 - savingsRate) * depositGrowthRate) / 12);
-
-            totalSavings += monthlySavings;
-
-            if (includeOneOff && oneOffAmount && months === oneOffMonth) {
-                totalSavings -= oneOffAmount;
-                if (totalSavings < 0) totalSavings = 0;
+            let currentYear = Math.floor(months / 12);
+            
+            if (incomeIncreaseType === 'fixed' && currentYear >= incomeIncreaseYear) {
+                monthlyIncome = newMonthlyIncome;
+            } else if (incomeIncreaseType === 'percentage' && months % 12 === 0) {
+                monthlyIncome *= (1 + annualPercentageIncrease);
             }
 
             if (months % 12 === 0) {
-                retirementGoal *= (1 + inflationRate);
+                monthlyExpenditures *= (1 + inflationRate);
+                retirementGoal = ((monthlyExpenditures * 12) / 0.04);
             }
+
+            let monthlySavings = monthlyIncome - monthlyExpenditures;
+            let investmentSavings = monthlySavings * savingsRate;
+            let depositSavings = monthlySavings * (1 - savingsRate);
+            let monthlyInvestmentReturn = (totalSavings * savingsRate) * (0.143 / 12);
+            let monthlyDepositReturn = (totalSavings * (1 - savingsRate)) * (0.072 / 12);
+            totalSavings += investmentSavings + monthlyInvestmentReturn + depositSavings + monthlyDepositReturn;
+
+            // Handle ad-hoc expenses
+            if (adhocExpense > 0 && adhocMonth) {
+                if (adhocAnnual && months % 12 === adhocMonth - 1) {
+                    totalSavings -= adhocExpense;
+                } else if (!adhocAnnual && months === adhocMonth) {
+                    totalSavings -= adhocExpense;
+                }
+            }
+
+            data.push(totalSavings);
+            retirementReached = totalSavings >= retirementGoal;
         }
 
         const yearsToRetirement = Math.floor(months / 12);
         const remainingMonths = months % 12;
-
         document.getElementById('result').innerHTML = `
-            <p>Mục tiêu hưu trí của bạn dựa trên quy tắc 4% là: ${retirementGoal.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}.</p>
-            <p>Thời gian cần thiết để đạt mục tiêu hưu trí: ${yearsToRetirement} năm và ${remainingMonths} tháng.</p>
-        `;
+        <p>Bạn có thể đạt mục tiêu hưu trí sau: ${yearsToRetirement} năm và ${remainingMonths} tháng.</p>
+        <p>Tổng tiết kiệm dự kiến là: ${totalSavings.toLocaleString('en')} VND.</p>
+    `;
 
-        // Pass the oneOffAmount and oneOffMonth to the updateChart function
-        updateChart(months, initialBalance, monthlyIncome, savingsRate, monthlyExpenditures, investmentGrowthRate, depositGrowthRate, oneOffAmount, oneOffMonth);
-
+        updateChart(data);
     });
 
-    function updateChart(months, initialBalance, monthlyIncome, savingsRate, monthlyExpenditures, investmentGrowthRate, depositGrowthRate, oneOffAmount, oneOffMonth) {
+    function updateChart(data) {
         const ctx = document.getElementById('savingsChart').getContext('2d');
-        const labels = Array.from({length: months}, (_, i) => `${i + 1}`);
-        let data = [];
-        let totalSavings = initialBalance;
-    
-        for (let i = 0; i < months; i++) {
-            let monthlySavings = (monthlyIncome - monthlyExpenditures) * savingsRate;
-            let monthlyNonInvestmentSavings = (monthlyIncome - monthlyExpenditures - monthlySavings);
-    
-            totalSavings *= (1 + (savingsRate * investmentGrowthRate + (1 - savingsRate) * depositGrowthRate) / 12);
-            totalSavings += monthlySavings + monthlyNonInvestmentSavings;
-    
-            // Subtract the one-off transaction in the specified month
-            if (i + 1 === oneOffMonth) {
-                totalSavings -= oneOffAmount;
-                if (totalSavings < 0) totalSavings = 0;
-            }
-    
-            data.push(totalSavings);
-        }
-    
+        const labels = Array.from({ length: data.length }, (_, i) => `Tháng ${i}`);
         if (window.savingsChart && typeof window.savingsChart.destroy === 'function') {
             window.savingsChart.destroy();
         }
-    
+
         window.savingsChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels,
+                labels: labels,
                 datasets: [{
-                    label: 'Tổng số tiền để dành theo thời gian',
-                    data,
-                    fill: false,
+                    label: 'Tổng số tiền tiết kiệm trong suốt thời kỳ',
+                    data: data,
                     borderColor: 'rgb(75, 192, 192)',
                     tension: 0.1
                 }]
@@ -118,20 +130,36 @@ document.addEventListener('DOMContentLoaded', function() {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Tổng số tiền để dành (VND)'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Số tháng'
+                            text: 'Tổng tiền tiết kiệm (VND)'
                         },
-                        autoSkip: true,
-                        maxTicksLimit: 20
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('en-US', {
+                                    maximumFractionDigits: 0
+                                });
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toLocaleString('en-US', {
+                                        maximumFractionDigits: 0
+                                    }) + ' VND';
+                                }
+                                return label;
+                            }
+                        }
                     }
                 }
             }
         });
     }
-    
 });
